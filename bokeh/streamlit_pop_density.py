@@ -1,15 +1,15 @@
-#import streamlit as st
+import streamlit as st
 import numpy as np
 import os
 import json
 import pandas as pd
 import geopandas as gpd
 
-os.chdir("/Users/DarylTay/Desktop/Python/data/population-density")
+os.chdir("/Users/DarylTay/Documents/Github/bokeh-plots")
 
 ### 2000 - 2004
 
-old_df = pd.read_csv('singapore-residents-by-planning-area-subzone-age-group-and-sex-june-2000-onwards.csv')
+old_df = pd.read_csv('datasets/population-density/singapore-residents-by-planning-area-subzone-age-group-and-sex-june-2000-onwards.csv')
 
 old_df = old_df[['planning_area','resident_count','year']]
 
@@ -21,13 +21,13 @@ result['planning area'] = result['planning area'].str.upper()
 #result
 
 ### 2005 - 2010
-df_shape = gpd.read_file('PLAN_BDY_AGE_GENDER_2005.shp')
+df_shape = gpd.read_file('datasets/population-density/PLAN_BDY_AGE_GENDER_2005.shp')
 df_shape.columns
 df_shape = df_shape[['PLN_AREA_N','TOTAL']]
 df_shape['year'] = [2005 for i in range(df_shape.shape[0])]
 
 for year in range(2006,2011):
-    df = gpd.read_file('PLAN_BDY_AGE_GENDER_' + str(year) + '.shp')[['PLN_AREA_N','TOTAL']]
+    df = gpd.read_file('datasets/population-density/PLAN_BDY_AGE_GENDER_' + str(year) + '.shp')[['PLN_AREA_N','TOTAL']]
     df['year'] = [year for i in range(df.shape[0])]
     #print(str(year) + str(df.shape))
     df_shape = pd.concat([df_shape,df])
@@ -39,8 +39,8 @@ df_shape['total'] = total
 #df_shape
 
 ### 2011 - 2019 
-df2 = pd.read_csv('planning-area-subzone-age-group-sex-and-type-of-dwelling-june-2011-2019.csv')
-df2
+df2 = pd.read_csv('datasets/population-density/planning-area-subzone-age-group-sex-and-type-of-dwelling-june-2011-2019.csv')
+
 result2 = df2.groupby(['planning_area','year',],as_index = False)[['resident_count']].sum()
 result2.columns = ['planning area','year','total']
 result2['planning area'] = result2['planning area'].str.upper()
@@ -54,10 +54,10 @@ final_df = pd.concat([result,df_shape,result2])
 
 map_year = ['98','08','14']
 
-map_98 = gpd.read_file('map_98_edited.geojson')
-map_08 = gpd.read_file('map_08_edited.geojson')
-map_14 = gpd.read_file('map_14_edited.geojson')
-map_19 = gpd.read_file('map_19.geojson')
+map_98 = gpd.read_file('datasets/population-density/maps/map_98_edited.geojson')
+map_08 = gpd.read_file('datasets/population-density/maps/map_08_edited.geojson')
+map_14 = gpd.read_file('datasets/population-density/maps/map_14_edited.geojson')
+map_19 = gpd.read_file('datasets/population-density/maps/map_19.geojson')
 
 df_98 = final_df.loc[final_df['year']==2000]
 year_08=[2001,2002,2003,2004,2005,2006,2007,2008,2009,2010]
@@ -72,13 +72,13 @@ map_df_14 = map_14.merge(df_14,left_on='planning_area',right_on='planning area',
 
 map_df_overall = pd.concat([map_df_98,map_df_08])
 map_df_overall = gpd.GeoDataFrame(pd.concat([map_df_overall,map_df_14]))
-map_df_overall.columns
+#map_df_overall.columns
 
 map_df_overall= map_df_overall[['planning_area','geometry','year','total']]
-map_df_overall.to_file('overall_map_2000_2019.geojson',driver="GeoJSON")
+#map_df_overall.to_file('overall_map_2000_2019.geojson',driver="GeoJSON")
 
 map_df_overall_14 = map_df_overall.loc[map_df_overall['year'].isin(year_14)]
-map_df_overall_14.to_file('overall_map_2011_2019.geojson',driver="GeoJSON")
+#map_df_overall_14.to_file('overall_map_2011_2019.geojson',driver="GeoJSON")
 
 xs = []
 ys = []
@@ -97,8 +97,8 @@ for obj in map_98.geometry.boundary:
         xs.append(obj_x)
         ys.append(obj_y)
 
-map_98_pa = map_98['PLN_AREA_N'].values
-map_98_sf = map_98['PLN_AREA_C'].values
+map_98_pa = map_98['planning_area'].values
+map_98_sf = map_98['planning_area_sf'].values
 map_98_df = pd.DataFrame({'planning_area':map_98_pa,'planning_area_sf':map_98_sf,'xs':xs,'ys':ys})
 
 xs = []
@@ -118,8 +118,8 @@ for obj in map_08.geometry.boundary:
         xs.append(obj_x)
         ys.append(obj_y)
 
-map_08_pa = map_08['PLN_AREA_N'].values
-map_08_sf = map_08['PLN_AREA_C'].values
+map_08_pa = map_08['planning_area'].values
+map_08_sf = map_08['planning_area_sf'].values
 map_08_df = pd.DataFrame({'planning_area':map_08_pa,'planning_area_sf':map_08_sf,'xs':xs,'ys':ys})
 
 xs = []
@@ -139,8 +139,8 @@ for obj in map_14.geometry.boundary:
         xs.append(obj_x)
         ys.append(obj_y)
 
-map_14_pa = map_14['PLN_AREA_N'].values
-map_14_sf = map_14['PLN_AREA_C'].values
+map_14_pa = map_14['planning_area'].values
+map_14_sf = map_14['planning_area_sf'].values
 map_14_df = pd.DataFrame({'planning_area':map_14_pa,'planning_area_sf':map_14_sf,'xs':xs,'ys':ys})
 
 final_df_all = pd.DataFrame()
@@ -155,7 +155,7 @@ for year in range(2000,2020):
         plot_temp = map_14_df.merge(df_temp, left_on = 'planning_area', right_on = 'planning area')
     final_df_all = pd.concat([final_df_all,plot_temp])
 
-final_df_all.to_excel('pop density map df.xlsx')
+#final_df_all.to_excel('pop density map df.xlsx')
 from bokeh.io import output_notebook, show, curdoc
 from bokeh.plotting import figure, output_file
 from bokeh.models.widgets import Slider
@@ -229,10 +229,10 @@ slider.js_on_change('value', callback)
 # Make a column layout of widgetbox(slider) and plot, and add it to the current document
 layout = column(slider,p)
 #curdoc().add_root(layout)
-output_file("Population Density of SG 2000 - 2019.html",mode='inline',root_dir=None)
+#output_file("Population Density of SG 2000 - 2019.html",mode='inline',root_dir=None)
 #Display the plot
-show(layout)
+#show(layout)
 
-#st.title('Singapore Population Density in each Planning area from 2000 - 2019')
+st.title('Singapore Population Density in each Planning area from 2000 - 2019')
 
-#st.bokeh_chart(layout, use_container_width=False)
+st.bokeh_chart(layout, use_container_width=False)
