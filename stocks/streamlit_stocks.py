@@ -1,10 +1,8 @@
 import streamlit as st
-from google.oauth2.service_account import Credentials
 import gspread as gs
 import os
 import pandas as pd
 import bokeh
-import numpy as np
 from bokeh.layouts import gridplot
 from bokeh.plotting import figure, show
 from bokeh.models import HoverTool, CustomJS, ColumnDataSource, DateRangeSlider, Dropdown, Select
