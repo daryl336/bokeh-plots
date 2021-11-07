@@ -5,7 +5,7 @@ import pandas as pd
 import bokeh
 from bokeh.layouts import gridplot
 from bokeh.plotting import figure, show
-from bokeh.models import HoverTool, CustomJS, ColumnDataSource, DateRangeSlider, Dropdown, Select
+from bokeh.models import HoverTool, CustomJS, ColumnDataSource, DateRangeSlider, Dropdown, Select, DataTable, TableColumn
 from bokeh.layouts import widgetbox, row, column
 from bokeh.io import output_file, show
 
@@ -17,6 +17,7 @@ credentials = st.secrets["gcp_service_account"]
 gc = gs.service_account_from_dict(credentials,scopes=scopes)
 
 gsheet_url = st.secrets["private_gsheets_url"]
+
 # Load Data on the Google Sheet.
 # Uses st.cache to only rerun when the query changes or after 10 min.
 #@st.cache(ttl=600)
@@ -28,13 +29,17 @@ def load_data(sheet_name):
     return df
 
 df = load_data('Record')
+# Load stock names
 stock_name = load_data('Stock Codes')
 
+# Generate stock names list
 do_not_use = ['EC WORLD REIT','SIA','CAPITACOM TRUST','SBJUN19 GX19060S','TEMASEKBOND']
 names = [x for x in list(stock_name['Name'].unique()) if x not in do_not_use]
 
+# Merge with the main dataset
 df = df.merge(stock_name,how='left',on='Symbol')
 
+# Manipulation
 df['datetime_str'] = df['Date'] + ' ' + df['Time']
 df['datetime'] = pd.to_datetime(df['datetime_str'],format='%d/%m/%Y %H:%M')
 df['Date_in_dateformat'] = pd.to_datetime(df['Date'],format='%d/%m/%Y')
@@ -107,22 +112,8 @@ callback = CustomJS(args=dict(source=source, source2=filtered,slider=date_range_
 
 date_range_slider.js_on_change('value', callback)
 select.js_on_change('value',callback)
-layout = row(column(p1,date_range_slider),select)
 
-#show(layout)
-
-st.title('Stocks!')
-
-st.bokeh_chart(layout, use_container_width=True)
-
-
-max_df = df.groupby('Symbol')[['Price']].max().reset_index()
-max_value = max_df[max_df['Symbol']=='ES3'].iloc[0][1]
-max_temp = df[ (df['Price']==max_value) & (df['Symbol']=='ES3') ]
-max_details = list(max_temp[['Symbol','Name','datetime_str','Price',]].iloc[max_temp.shape[0]-1])
-max_details
-
-
+# Generate statistics summary
 def generateMaxMinDetails(df):
     max_df = df.groupby('Symbol')[['Price']].max().reset_index()
     min_df = df.groupby('Symbol')[['Price']].min().reset_index()
@@ -131,14 +122,60 @@ def generateMaxMinDetails(df):
     for i in unique_symbol:
         max_value = max_df[max_df['Symbol']==i].iloc[0][1]
         max_temp = df[ (df['Price']==max_value) & (df['Symbol']==i) ]
-        max_details = list(max_temp[['Symbol','Name','datetime_str','Price']].iloc[max_temp.shape[0]-1]) + ['Max']
+        max_details = list(max_temp[['Symbol','Name','datetime_str','Price']].iloc[max_temp.shape[0]-1]) + ['All Time High']
 
         min_value = min_df[min_df['Symbol']==i].iloc[0][1]
         min_temp = df[ (df['Price']==min_value) & (df['Symbol']==i) ]
-        min_details = list(min_temp[['Symbol','Name','datetime_str','Price']].iloc[min_temp.shape[0]-1]) + ['Min']
+        min_details = list(min_temp[['Symbol','Name','datetime_str','Price']].iloc[min_temp.shape[0]-1]) + ['All Time Low']
 
         result.append(max_details)
         result.append(min_details)
     return pd.DataFrame(result,columns=['Symbol','Name','datetime_str','Price','status'])
 
 minmax = generateMaxMinDetails(df)
+filtered_minmax = minmax[minmax['Symbol']=='ES3']
+
+columns = [
+    TableColumn(field='Name', title='Name'),
+    TableColumn(field='Symbol', title='Symbol'),
+    TableColumn(field='datetime_str', title='DateTime'),
+    TableColumn(field='Price', title='Price')
+    ]
+
+minmax_ds = ColumnDataSource(minmax)
+filtered_minmax_ds = ColumnDataSource(filtered_minmax)
+
+p2 = DataTable(source=filtered_minmax_ds, columns=columns)
+
+callback_datatable = CustomJS(args=dict(source=minmax_ds, source2=filtered_minmax_ds,select=select), code="""       
+        const name = select.value
+        console.log(name)
+
+        source2.data['Name']=[];
+        source2.data['Symbol']=[];
+        source2.data['datetime_str']=[];
+        source2.data['Price']=[];
+
+        for (var i = 0; i <= source.data['Symbol'].length; i++){
+          if (source.data['Name'][i] == name){
+              source2.data['Name'].push(source.data['Name'][i])
+              source2.data['Symbol'].push(source.data['Symbol'][i])
+              source2.data['datetime_str'].push(source.data['datetime_str'][i])
+              source2.data['Price'].push(source.data['Price'][i])
+          }
+        }
+        source2.change.emit();
+    """)
+    
+select.js_on_change('value',callback_datatable)
+#show(column(select,p2))
+# Layout of all the charts
+layout = row(select,column(p1,date_range_slider))
+#layout = column(select,p2)
+
+#show(layout)
+
+# Initiate streamlit
+st.title('Stocks!')
+st.dataframe(data=minmax)
+st.bokeh_chart(layout, use_container_width=True)
