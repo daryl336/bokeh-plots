@@ -57,7 +57,7 @@ filtered = ColumnDataSource(ES3)
 select = Select(title="Stocks:", value=names[0], options=names)
 
 #Add hover tool
-hover = HoverTool(tooltips = [('Date','@datetime{%F %H:00}'),('Stock Name','@Name'),('Price','$@Price')],formatters = {'@datetime' : 'datetime'},mode='vline')
+hover = HoverTool(tooltips = [('Date','@datetime{%F %H:00}'),('Price','$@Price')],formatters = {'@datetime' : 'datetime'},mode='vline')
 
 # Make a slider
 date_range_slider = DateRangeSlider(value=(start_date, end_date),start=start_date, end=end_date)
