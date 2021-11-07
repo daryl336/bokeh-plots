@@ -176,6 +176,8 @@ layout = row(select,column(p1,date_range_slider))
 #show(layout)
 
 # Initiate streamlit
-st.title('Stocks!')
+st.title('Stocks Dashboard')
+st.write('All Time High and Low Since 11 Oct 2021')
 st.dataframe(data=minmax)
+st.write('Stocks!')
 st.bokeh_chart(layout, use_container_width=True)
