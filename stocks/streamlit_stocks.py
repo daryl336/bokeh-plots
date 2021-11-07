@@ -113,4 +113,32 @@ layout = row(column(p1,date_range_slider),select)
 
 st.title('Stocks!')
 
-st.bokeh_chart(layout, use_container_width=False)
+st.bokeh_chart(layout, use_container_width=True)
+
+
+max_df = df.groupby('Symbol')[['Price']].max().reset_index()
+max_value = max_df[max_df['Symbol']=='ES3'].iloc[0][1]
+max_temp = df[ (df['Price']==max_value) & (df['Symbol']=='ES3') ]
+max_details = list(max_temp[['Symbol','Name','datetime_str','Price',]].iloc[max_temp.shape[0]-1])
+max_details
+
+
+def generateMaxMinDetails(df):
+    max_df = df.groupby('Symbol')[['Price']].max().reset_index()
+    min_df = df.groupby('Symbol')[['Price']].min().reset_index()
+    unique_symbol = list(df['Symbol'].unique())
+    result = []
+    for i in unique_symbol:
+        max_value = max_df[max_df['Symbol']==i].iloc[0][1]
+        max_temp = df[ (df['Price']==max_value) & (df['Symbol']==i) ]
+        max_details = list(max_temp[['Symbol','Name','datetime_str','Price']].iloc[max_temp.shape[0]-1]) + ['Max']
+
+        min_value = min_df[min_df['Symbol']==i].iloc[0][1]
+        min_temp = df[ (df['Price']==min_value) & (df['Symbol']==i) ]
+        min_details = list(min_temp[['Symbol','Name','datetime_str','Price']].iloc[min_temp.shape[0]-1]) + ['Min']
+
+        result.append(max_details)
+        result.append(min_details)
+    return pd.DataFrame(result,columns=['Symbol','Name','datetime_str','Price','status'])
+
+minmax = generateMaxMinDetails(df)
