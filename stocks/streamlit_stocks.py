@@ -8,6 +8,10 @@ from bokeh.plotting import figure, show
 from bokeh.models import HoverTool, CustomJS, ColumnDataSource, DateRangeSlider, Dropdown, Select, DataTable, TableColumn
 from bokeh.layouts import widgetbox, row, column
 from bokeh.io import output_file, show
+from bokeh.io import curdoc
+
+#Bokeh theme
+curdoc().theme = 'dark_minimal'
 
 # Create a connection object.
 scopes = ['https://www.googleapis.com/auth/spreadsheets']
