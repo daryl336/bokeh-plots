@@ -32,7 +32,10 @@ def load_data(sheet_name):
     df = pd.DataFrame(records[1:],columns=records[0])
     return df
 
+past_data = load_data('past data')
 df = load_data('Record')
+df = pd.concat([past_data,df])
+
 # Load stock names
 stock_name = load_data('Stock Codes')
 
