@@ -46,6 +46,7 @@ names = [x for x in list(stock_name['Name'].unique()) if x not in do_not_use]
 # Merge with the main dataset
 df = df.merge(stock_name,how='left',on='Symbol')
 
+df['Date'] = df['Date'].apply(lambda x: str(x).strip())
 # Manipulation
 df['datetime_str'] = df['Date'] + ' ' + df['Time']
 df['datetime'] = pd.to_datetime(df['datetime_str'],format='%d/%m/%Y %H:%M')
@@ -184,7 +185,7 @@ layout = row(select,column(p1,date_range_slider))
 
 # Initiate streamlit
 st.title('Stocks Dashboard')
-st.write('All Time High and Low Since 11 Oct 2021')
+st.write('All Time High and Low Since 19 Nov 2019')
 st.dataframe(data=minmax)
 st.write('Stocks!')
 st.bokeh_chart(layout, use_container_width=True)
