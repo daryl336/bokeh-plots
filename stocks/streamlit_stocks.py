@@ -1,8 +1,6 @@
 import streamlit as st
 import gspread as gs
-import os
 import pandas as pd
-import bokeh
 from bokeh.layouts import gridplot
 from bokeh.plotting import figure, show
 from bokeh.models import HoverTool, CustomJS, ColumnDataSource, DateRangeSlider, Dropdown, Select, DataTable, TableColumn
@@ -46,12 +44,10 @@ names = [x for x in list(stock_name['Name'].unique()) if x not in do_not_use]
 # Merge with the main dataset
 df = df.merge(stock_name,how='left',on='Symbol')
 
-df['Date'] = df['Date'].apply(lambda x: str(x).strip())
+df['date_string'] = df['Date'].apply(lambda x: str(x).strip())
 # Manipulation
 df['datetime_str'] = df['Date'] + ' ' + df['Time']
-df['datetime'] = pd.to_datetime(df['datetime_str'],format='%d/%m/%Y %H:%M')
-df['Date_in_dateformat'] = pd.to_datetime(df['Date'],format='%d/%m/%Y')
-df['date_string'] = df['Date_in_dateformat'].apply(lambda x: str(x)[:10])
+df['datetime'] = pd.to_datetime(df['datetime_str'],format='%Y-%m-%d %H:%M')
 
 ES3 = df[df['Symbol']=='ES3']
 
@@ -181,7 +177,7 @@ select.js_on_change('value',callback_datatable)
 layout = row(select,column(p1,date_range_slider))
 #layout = column(select,p2)
 
-#show(layout)
+show(layout)
 
 # Initiate streamlit
 st.title('Stocks Dashboard')
