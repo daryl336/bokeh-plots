@@ -1,4 +1,4 @@
-MarkupSafe==2.0.1
+streamlit==0.86.0
 Jinja2==3.0.2
 bokeh==2.0.0
 gspread==4.0.1
